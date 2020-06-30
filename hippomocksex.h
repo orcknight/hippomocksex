@@ -1440,8 +1440,12 @@ public:
 			return (mock<T> *)(0);
 		}
 		void ***base = (void ***)this;
+		if (0 == (mock<T> *)((*base)[VIRT_FUNC_LIMIT]))
+		{
+			std::list<base_mock *>& allMocks = MockRepoInstanceHolder<0>::instance->GetMocks();
+			return (mock<T> *)allMocks.front();
+		}
 		return (mock<T> *)((*base)[VIRT_FUNC_LIMIT]);
-		
 	}
 	std::pair<int, int> translateX(int x)
 	{
@@ -3282,10 +3286,15 @@ public:
 		latentException = holder;
 	}
 #endif
+	std::list<base_mock *>& GetMocks()
+	{
+		return mocks;
+	}
 #ifdef _MSC_VER
 #ifdef _HIPPOMOCKS__ENABLE_CFUNC_MOCKING_SUPPORT
 #define OnCallFunc(func) RegisterExpect_<__COUNTER__>(&func, HM_NS Any, #func, __FILE__, __LINE__)
 #define ExpectCallFunc(func) RegisterExpect_<__COUNTER__>(&func, HM_NS Once, #func, __FILE__, __LINE__)
+#define OnCallClassFunc(obj, func) RegisterExpect_ClassMethod<__COUNTER__>(obj, &func, HM_NS Any, #func, __FILE__, __LINE__)
 #define ExpectCallClassFunc(obj, func) RegisterExpect_ClassMethod<__COUNTER__>(obj, &func, HM_NS Once, #func, __FILE__, __LINE__)
 #define NeverCallFunc(func) RegisterExpect_<__COUNTER__>(&func, HM_NS Never, #func, __FILE__, __LINE__)
 #define OnCallFuncOverload(func) RegisterExpect_<__COUNTER__>(func, HM_NS Any, #func, __FILE__, __LINE__)
@@ -6299,8 +6308,9 @@ TCall<Y> &MockRepository::RegisterExpect_ClassMethod(Z2 *mck, Y(Z::*func)(), Reg
 {
 	Y(mockFuncs<Z2, Y>::*mfp)();
 	mfp = &mockFuncs<Z2, Y>::template expectation0<X>;
-	int index = BasicStaticRegisterExpect(reinterpret_cast<void(*)()>(GetClassMethodAddr(func)), reinterpret_cast<void(*)()>(mfp), X);
-	TCall<Y> *call = new TCall<Y>(expect, NULL, std::pair<int, int>(0, index), lineNo, functionName, fileName);
+	void* addr = GetClassMethodAddr(mfp);
+	int index = BasicStaticRegisterExpect(reinterpret_cast<void(*)()>(GetClassMethodAddr(func)), reinterpret_cast<void(*)()>(addr), X);
+	TCall<Y> *call = new TCall<Y>(expect, reinterpret_cast<base_mock *>(mck), std::pair<int, int>(0, index), lineNo, functionName, fileName);
 	addCall(call, expect);
 	return *call;
 }
