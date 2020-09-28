@@ -1437,10 +1437,12 @@ public:
 	{
 		if (1 > this->funcTables.size())
 		{
-			return (mock<T> *)(0);
+			std::list<base_mock *>& allMocks = MockRepoInstanceHolder<0>::instance->GetMocks();
+			return (mock<T> *)allMocks.front();
 		}
 		void ***base = (void ***)this;
-		if (0 == (mock<T> *)((*base)[VIRT_FUNC_LIMIT]))
+		auto a = &mock<T>::NotImplemented;
+		if ((mock<T> *)horrible_cast<void *>(a) != (mock<T> *)((*base)[VIRT_FUNC_LIMIT - 1]))
 		{
 			std::list<base_mock *>& allMocks = MockRepoInstanceHolder<0>::instance->GetMocks();
 			return (mock<T> *)allMocks.front();
@@ -3293,9 +3295,13 @@ public:
 #ifdef _MSC_VER
 #ifdef _HIPPOMOCKS__ENABLE_CFUNC_MOCKING_SUPPORT
 #define OnCallFunc(func) RegisterExpect_<__COUNTER__>(&func, HM_NS Any, #func, __FILE__, __LINE__)
-#define ExpectCallFunc(func) RegisterExpect_<__COUNTER__>(&func, HM_NS Once, #func, __FILE__, __LINE__)
+#define ExpectCallFunc(func) RegisterExpect_<__COUNTER__>(&func, HM_NS Once, #func, __FRegisterExpect_ILE__, __LINE__)
 #define OnCallClassFunc(obj, func) RegisterExpect_ClassMethod<__COUNTER__>(obj, &func, HM_NS Any, #func, __FILE__, __LINE__)
 #define ExpectCallClassFunc(obj, func) RegisterExpect_ClassMethod<__COUNTER__>(obj, &func, HM_NS Once, #func, __FILE__, __LINE__)
+
+#define OnCallClassFuncOverload(obj, func) RegisterExpect_ClassMethod<__COUNTER__>(obj, func, HM_NS Any, #func, __FILE__, __LINE__)
+#define ExpectCallClassFuncOverload(obj, func) RegisterExpect_ClassMethod<__COUNTER__>(obj, func, HM_NS Once, #func, __FILE__, __LINE__)
+
 #define NeverCallFunc(func) RegisterExpect_<__COUNTER__>(&func, HM_NS Never, #func, __FILE__, __LINE__)
 #define OnCallFuncOverload(func) RegisterExpect_<__COUNTER__>(func, HM_NS Any, #func, __FILE__, __LINE__)
 #define ExpectCallFuncOverload(func) RegisterExpect_<__COUNTER__>(func, HM_NS Once, #func, __FILE__, __LINE__)
